@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Luxa • My Own Email</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  body {margin:0;font-family:system-ui;background:#000;color:#0f0;text-align:center;padding:10vh 15px}
+  h1 {font-size:4.5rem;margin:0;text-shadow:0 0 30px #0f0}
+  .email {font-size:2.2rem;margin:30px;text-shadow:0 0 20px #0f0}
+  input,textarea,button {width:90%;max-width:520px;margin:12px auto;padding:16px;display:block;
+    background:#111;border:2px solid #0f0;color:#0f0;border-radius:12px;font-size:1.1rem}
+  button {background:#0f0;color:#000;font-weight:bold;cursor:pointer}
+  #inbox {margin-top:50px}
+  .msg {background:#111;padding:20px;margin:15px auto;max-width:600px;border-left:6px solid #0f0;text-align:left}
+</style>
+</head>
+<body>
+
+<h1>LUXA</h1>
+<div class="email">anything@luxa.gt.tc</div>
+<p>100% self-hosted • No Google • No Zoho • Runs on my server</p>
+
+<input id="name" placeholder="Your name">
+<input id="email" type="email" placeholder="Your email">
+<textarea id="msg" rows="5" placeholder="Your message"></textarea>
+<button onclick="sendMsg()">Send Message</button>
+<div id="status"></div>
+
+<div id="inbox">
+  <h2>Live Inbox</h2>
+  <div id="list">Loading…</div>
+</div>
+
+<script>
+function sendMsg() {
+  const data = {
+    name: document.getElementById('name').value,
+    email: document.getElementById('email').value,
+    message: document.getElementById('msg').value
+  };
+  fetch('/send', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(data)
+  }).then(r => {
+    document.getElementById('status').innerHTML = r.ok ?
+      '<b style="color:#0f0">Message sent!</b>' :
+      '<b style="color:red">Error</b>';
+    document.getElementById('name').value =
+    document.getElementById('email').value =
+    document.getElementById('msg').value = '';
+    loadInbox();
+  });
+}
+
+function loadInbox() {
+  fetch('/inbox.json')
+    .then(r => r.json())
+    .then(mails => {
+      if (mails.length === 0) {
+        document.getElementById('list').innerHTML = '<i>Empty inbox</i>';
+        return;
+      }
+      document.getElementById('list').innerHTML = mails.map(m => `
+        <div class="msg">
+          <b>From:</b> ${m.from}<br>
+          <b>Subject:</b> ${m.subject}<br>
+          <small>${m.date}</small>
+          <p>${m.text.replace(/\n/g,'<br>')}</p>
+        </div>
+      `).join('');
+    });
+}
+
+loadInbox();
+setInterval(loadInbox, 8000);
+</script>
+
+</body>
+</html>
